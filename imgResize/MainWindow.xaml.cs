@@ -42,9 +42,8 @@ namespace imgResize
             this.openStatus.Text = "clicked";
 
             var openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            //openFileDialog.Multiselect = true;
+            openFileDialog.Multiselect = true;
             openFileDialog.Filter = "Image files (*.jpg)|*.png|All files (*.*)|*.*";
-            //openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
             var fileNames = new List<String>();
 
@@ -53,15 +52,10 @@ namespace imgResize
             if (result == false)
             {
                 return;
-                //string filename = openFileDialog.FileName;
             }
-
-
 
             if (result!=false)
             {
-                //var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read);
-                this.openStatus.Text = "Picked photo" + openFileDialog.FileName;
                 const int size = 200;
                 const int quality = 75;
 
@@ -75,12 +69,13 @@ namespace imgResize
                     JpegSubsampleMode = ChromaSubsampleMode.Subsample420
                 };
 
-                
 
-                //MagicImageProcessor.ProcessImage(openFileDialog, new FileStream(outPath, FileMode.Create), settings);
-                //string outPath=await createOutputPath("resize");
-                //this.openStatus.Text = "outDir";
-                resizeImage(openFileDialog.FileName, 300);
+                foreach (string fileName in openFileDialog.FileNames)
+                {
+                    this.openStatus.Text = "Picked photo" + fileName;
+                    resizeImage(fileName, 500);
+                }
+                
             }
             else
             {
@@ -90,9 +85,36 @@ namespace imgResize
             }
         }
 
+        private List<string> getImageFiles()
+        {
+            this.openStatus.Text = "clicked";
+
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Multiselect = true;
+            openFileDialog.Filter = "Image files (*.jpg)|*.png|All files (*.*)|*.*";
+
+            var fileNames = new List<string>();
+
+            var result = openFileDialog.ShowDialog();
+
+            if (result != false)
+            {
+                fileNames = openFileDialog.FileNames.ToList();
+            }
+            return fileNames;
+        }
+
+        private void resizeImagesParallel(List<string> imgArray, int maxSize)
+        {
+            Parallel.ForEach(imgArray, imgPath =>
+            {
+                resizeImage(imgPath, maxSize);
+            });
+        }
+
         
 
-        async private void resizeImage(string input, int size)
+        private void resizeImage(string input, int size)
         {
             var settings = new ProcessImageSettings()
             {
@@ -108,17 +130,6 @@ namespace imgResize
             {
                 MagicImageProcessor.ProcessImage(input, output, settings);
             }
-
-            //var outputStream = new FileStream(outputPath.Path, FileMode.Create);
-            //var outStream = await outputPath.OpenStreamForWriteAsync();
-
-            //var outStream = await outputPath.OpenAsync(FileAccessMode.ReadWrite);
-
-            //var ioStream = await outputPath.OpenStreamForWriteAsync();
-
-            //MagicImageProcessor.ProcessImage(input, ioStream, settings);
-
-
 
         }
 
