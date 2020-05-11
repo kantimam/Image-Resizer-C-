@@ -37,11 +37,18 @@ namespace imgResize
         {
             InitializeComponent();
 
+            // create folder on startup if not exists
             createFolder();
 
             fillOptions();
             
         }
+
+        // some state
+        private List<string> imageFileNames;
+        private bool ResizeFinished = false;
+        private bool OpenError = false;
+        private Regex NumOnly = new Regex("[^0-9]+");
 
         // default Settings
         private ProcessImageSettings defaultSetting = new ProcessImageSettings()
@@ -71,21 +78,28 @@ namespace imgResize
                 Name="Full HD",
                 Width=1920,
                 Height=1080,
-                Mode="contain"
+                Mode="cover"
             },
             new Option()
             {
                 Name="HD",
                 Width=1280,
                 Height=720,
-                Mode="contain"
+                Mode="cover"
             },
             new Option()
             {
                 Name="Mobile",
                 Width=480,
                 Height=0,
-                Mode="contain"
+                Mode="cover"
+            },
+            new Option()
+            {
+                Name="Small Thumb",
+                Width=128,
+                Height=128,
+                Mode="crop"
             }
         }; 
 
@@ -103,86 +117,53 @@ namespace imgResize
 
         private void fillOptions()
         {
+            // fill the ListView with the sizeOptions
             this.sizeOptionsList.ItemsSource = settingsList;
         }
 
-        
+
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var fileArr=getImageFiles();
+            this.imageFileNames=getImageFiles();
 
-            if (fileArr.Count()>0)
+            if (imageFileNames.Count()>0)
             {
-                this.openStatus.Text = "selected "+fileArr.Count()+" images";
-
-
-                // get dimensions from input field
-                int width = Int32.Parse(this.widthTextBox.Text);
-                resizeImagesParallel(fileArr, width);
+                this.ResizeFinished = false;
+                this.OpenError = false;
+                this.openStatus.IsEnabled=true;
+                this.openStatus.Content = "resize "+this.imageFileNames.Count()+" images";
                 
             }
             else
             {
-                //
-                this.openStatus.Text = "Could not open file";
+                this.OpenError = true;
+                this.openStatus.IsEnabled=false;
+                this.openStatus.Content = "Could not open file";
 
             }
         }
 
-
-        private void Button_Click_Old(object sender, RoutedEventArgs e)
+        private void ResizeButtonClick(object sender, RoutedEventArgs e)
         {
-            this.openStatus.Text = "clicked";
-
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Multiselect = true;
-            openFileDialog.Filter = "Image files (*.jpg)|*.png|All files (*.*)|*.*";
-
-            var fileNames = new List<String>();
-
-            var result = openFileDialog.ShowDialog();
-
-            if (result == false)
+            // button only works if certain conditions are true clicking it anyway will give you a message inside the button
+            if (this.OpenError)
             {
-                return;
+                this.openStatus.Content = "please try opening again";
             }
-
-            if (result != false)
+            else if (this.ResizeFinished)
             {
-                const int size = 200;
-                const int quality = 75;
-
-                var settings = new ProcessImageSettings()
-                {
-                    Width = size,
-                    Height = size,
-                    ResizeMode = CropScaleMode.Max,
-                    SaveFormat = FileFormat.Jpeg,
-                    JpegQuality = quality,
-                    JpegSubsampleMode = ChromaSubsampleMode.Subsample420
-                };
-
-
-                foreach (string fileName in openFileDialog.FileNames)
-                {
-                    this.openStatus.Text = "Picked photo" + fileName;
-                    resizeImage(fileName, 500);
-                }
-
+                this.openStatus.Content = "already finished";
             }
-            else
+            else if (this.imageFileNames.Count() > 0)
             {
-                //
-                this.openStatus.Text = "Could not open file";
-
+                resizeImagesParallel(this.imageFileNames);
             }
         }
-
+        
 
         private List<string> getImageFiles()
         {
-            this.openStatus.Text = "clicked";
-
+            // open dialog the get the image files png and jpg is allowed so far
             var openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Multiselect = true;
             openFileDialog.Filter = "Image files (*.jpg)|*.png|All files (*.*)|*.*";
@@ -198,17 +179,23 @@ namespace imgResize
             return fileNames;
         }
 
-        private void resizeImagesParallel(List<string> imgArray, int maxSize)
+        private void resizeImagesParallel(List<string> imgArray)
         {
+            // actually resize list of images in parallel
             Parallel.ForEach(imgArray, imgPath =>
             {
-                resizeImage(imgPath, maxSize);
+                resizeImage(imgPath);
             });
+            // update the state of the button after resize finished
+            this.openStatus.IsEnabled = false;
+            this.openStatus.Content = imageFileNames.Count() + " images resized!";
+            this.ResizeFinished = true;
+            this.OpenError = false;
         }
 
-        
 
-        private void resizeImage(string input, int size)
+
+        private void resizeImage(string input)
         {
 
             using (var output = new FileStream(OutputPath(input, outputDirectory), FileMode.Create))
@@ -222,6 +209,7 @@ namespace imgResize
 
         private string OutputPath(string inputPath, string outputDirectory)
         {
+            // create outputpath for the images usually just the image name with resized tagged on
             return System.IO.Path.Combine(
                 outputDirectory,                
                 System.IO.Path.GetFileNameWithoutExtension(inputPath)
@@ -230,36 +218,112 @@ namespace imgResize
            );
         }
 
-        private void heightTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void EnableResize()
         {
-
+            // make the resize button clickable again if certain conditions are true
+            if (OpenError || !ResizeFinished || imageFileNames.Count < 1) return;
+            this.openStatus.IsEnabled = true;
+            this.ResizeFinished = false;
         }
+      
 
         private void AllowNumbers(object sender, TextCompositionEventArgs e)
         {
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
+            e.Handled = NumOnly.IsMatch(e.Text);
         }
 
         private void OptionSelected(object sender, EventArgs e)
         {
+            // select option by clicking on the settings presets list
             Option options=(Option)this.sizeOptionsList.SelectedItem;
-            this.openStatus.Text = options.Name;
+            // set the custom values to the preset
             this.widthTextBox.Text = options.Width.ToString();
             this.heightTextBox.Text = options.Height.ToString();
             SelectOption(options);
-            return;
         }
+
 
         private void SelectOption(Option option)
         {
+            // set the settings to the options from the preset
+            if (option.Width != settings.Width || option.Height != settings.Height) EnableResize(); // if settings change re enabled the button
             this.settings.Width = option.Width;
             this.settings.Height = option.Height;
-            
-            this.settings.ResizeMode =
-                option.Mode=="crop" ? CropScaleMode.Crop : CropScaleMode.Max;
-            
-            
+            this.settings.ResizeMode = option.Mode == "crop" ? SetRadioCrop() : SetRadioCover();
+           
         }
-}
+
+        CropScaleMode SetRadioCrop()
+        {
+            this.CoverRadio.IsChecked = false;
+            this.CropRadio.IsChecked = true;
+            if (CropScaleMode.Crop != settings.ResizeMode) EnableResize(); // if settings change re enabled the button
+            return CropScaleMode.Crop;
+        }
+        CropScaleMode SetRadioCover()
+        {
+            this.CoverRadio.IsChecked = true;
+            this.CropRadio.IsChecked = false;
+            if (CropScaleMode.Max != settings.ResizeMode) EnableResize(); // if settings change re enabled the button
+            return CropScaleMode.Max;
+        }
+
+        void SetModeCover(object sender, EventArgs e)
+        {
+            this.settings.ResizeMode = SetRadioCover();
+        }
+
+        void SetModeCrop(object sender, EventArgs e)
+        {
+            this.settings.ResizeMode = this.SetRadioCrop();
+        }
+
+        void CustomWidthChanged(object sender, TextChangedEventArgs e)
+        {
+            var textData = sender as TextBox;
+            if (textData.Text.Length > 0 && !this.NumOnly.IsMatch(textData.Text))
+            {
+                int size = int.Parse(textData.Text);
+                if (size != settings.Width)
+                {
+                    this.settings.Width = size; // only set width if it rly changed also re enable the resize button for the same files
+                    EnableResize();
+                }
+            }
+            else this.settings.Width = 128;
+
+        }
+
+        void CustomHeightChanged(object sender, TextChangedEventArgs e)
+        {
+            var textData = sender as TextBox;
+            if (textData.Text.Length>0 && !this.NumOnly.IsMatch(textData.Text))
+            {
+                int size = int.Parse(textData.Text);
+                if (size != settings.Height)
+                {
+                    this.settings.Height = size; // only set height if it rly changed also re enable the resize button for the same files
+                    EnableResize();
+                }
+            }
+            //else MessageBox.Show("only positive numbers allowed");
+            else this.settings.Height = 128;
+        }
+    }
+
+
+    public class SettingsValueConverter : IValueConverter
+    {
+        // convert height and width inside settings to "auto" if its 0 or lower. Just calculate this size by using the dimensions of the real image
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            var val = value.ToString(); 
+            return val==null || int.Parse(val)<1 ? "auto" : value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            return value as string == "auto" ? "0" : value;
+        }
+    }
 }
