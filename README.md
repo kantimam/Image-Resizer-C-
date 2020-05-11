@@ -8,7 +8,7 @@ Clone the solution and build it in Visual Studio.
 Resized images will be saved in pictures/resizedPictures.
 The default mode cover(Max) will preserve aspect ratio by changing one of the dimensions usually the smaller one.
 
-#Image
+# Image
 ![Main Window](./resize.jpg)
 
 
