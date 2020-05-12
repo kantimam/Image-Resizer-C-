@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:imgResize"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="340">
+        Title="MainWindow" Height="540" Width="340">
     <Window.Resources>
         <local:SettingsValueConverter x:Key="SettingsValueConverter"></local:SettingsValueConverter>
     </Window.Resources>    
@@ -42,9 +42,11 @@
             >
                 Custom
             </TextBlock>
-           
-            
-            <Label>
+
+
+            <Label
+               FontWeight="Bold"
+            >
                 Width
             </Label>
             
@@ -56,7 +58,9 @@
                 500
             </TextBox>
 
-            <Label>
+            <Label
+               FontWeight="Bold"
+            >
                 Height
             </Label>
             <TextBox
@@ -66,7 +70,7 @@
             >
                 500
             </TextBox>
-            <Label Margin="0 20 0 4" FontWeight="Bold">
+            <Label Margin="0 14 0 4" FontWeight="Bold">
                 Mode
             </Label>
             <StackPanel Orientation="Horizontal">
@@ -76,6 +80,29 @@
                 <RadioButton  Name="CropRadio" GroupName="modeSelect" Margin="40 0 0 0" Click="SetModeCrop" IsChecked="False">
                     crop
                 </RadioButton>
+            </StackPanel>
+
+            <Label
+                Margin="0 14 0 0" 
+                FontWeight="Bold"
+            >
+                Quality
+            </Label>
+            
+            <StackPanel Orientation="Horizontal">
+                <TextBox
+                    Name="QualityTextBox"
+                    PreviewTextInput="AllowNumbers" 
+                    TextChanged="CustomQualityChanged"
+                    Padding="14 0"
+                >
+                    75
+                </TextBox>
+                <TextBlock
+                    Padding="4 0"
+                >
+                    %
+                </TextBlock>
             </StackPanel>
             
         </StackPanel>

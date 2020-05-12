@@ -1,21 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.IO;
 using PhotoSauce.MagicScaler;
 using System.Text.RegularExpressions;
-using System.ComponentModel;
 
 public class Option
 {
@@ -23,6 +16,7 @@ public class Option
     public int Width { get; set; }
     public int Height { get; set; }
     public string Mode { get; set; }
+    public int Quality { get; set; }
 }
 
 namespace imgResize
@@ -78,28 +72,32 @@ namespace imgResize
                 Name="Full HD",
                 Width=1920,
                 Height=1080,
-                Mode="cover"
+                Mode="cover",
+                Quality=100
             },
             new Option()
             {
                 Name="HD",
                 Width=1280,
                 Height=720,
-                Mode="cover"
+                Mode="cover",
+                Quality=80
             },
             new Option()
             {
                 Name="Mobile",
                 Width=480,
                 Height=0,
-                Mode="cover"
+                Mode="cover",
+                Quality=75
             },
             new Option()
             {
                 Name="Small Thumb",
                 Width=128,
                 Height=128,
-                Mode="crop"
+                Mode="crop",
+                Quality=75
             }
         }; 
 
@@ -239,6 +237,7 @@ namespace imgResize
             // set the custom values to the preset
             this.widthTextBox.Text = options.Width.ToString();
             this.heightTextBox.Text = options.Height.ToString();
+            this.QualityTextBox.Text = options.Quality.ToString();
             SelectOption(options);
         }
 
@@ -246,9 +245,11 @@ namespace imgResize
         private void SelectOption(Option option)
         {
             // set the settings to the options from the preset
-            if (option.Width != settings.Width || option.Height != settings.Height) EnableResize(); // if settings change re enabled the button
+            if (option.Width != settings.Width || option.Height != settings.Height || option.Quality != settings.JpegQuality) EnableResize(); // if settings change re enabled the button
             this.settings.Width = option.Width;
             this.settings.Height = option.Height;
+            this.settings.JpegQuality = option.Quality;
+            // update radio buttons state and set resizemode
             this.settings.ResizeMode = option.Mode == "crop" ? SetRadioCrop() : SetRadioCover();
            
         }
@@ -308,6 +309,21 @@ namespace imgResize
             }
             //else MessageBox.Show("only positive numbers allowed");
             else this.settings.Height = 128;
+        }
+
+        private void CustomQualityChanged(object sender, TextChangedEventArgs e)
+        {
+            var textData = sender as TextBox;
+            if (textData.Text.Length > 0 && !this.NumOnly.IsMatch(textData.Text))
+            {
+                int quality = int.Parse(textData.Text);
+                if (quality != settings.JpegQuality && quality>0 && quality<101)
+                {
+                    this.settings.JpegQuality = quality; // only set quality if it rly changed and range is valid also re enable the resize button for the same files
+                    EnableResize();
+                }
+            }
+            else this.settings.JpegQuality = 75;
         }
     }
 
