@@ -12,5 +12,5 @@ The default mode cover(Max) will preserve aspect ratio by changing one of the di
 ![Main Window](resizer.JPG)
 
 # TODO
-Add option to add / edit presets
+Add option to add / edit presets<br/>
 Add option to set the output folder
