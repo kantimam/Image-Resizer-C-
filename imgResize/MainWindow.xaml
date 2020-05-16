@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:imgResize"
         mc:Ignorable="d"
-        Title="MainWindow" Height="540" Width="340">
+        Title="Image Resizer" Height="540" Width="340">
     <Window.Resources>
         <local:SettingsValueConverter x:Key="SettingsValueConverter"></local:SettingsValueConverter>
     </Window.Resources>    
     <Grid >
         <StackPanel
-            Margin="5 0"
+            Margin="5 14 5 0"
         >
             <TextBlock
                 FontWeight="Bold"
