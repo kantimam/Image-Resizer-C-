@@ -1,6 +1,6 @@
 # Image-Resizer-C#
 Windows App that resizes pictures using WPF and MagicScalar.
-Mostly for resizing images for use in my web projects since jpeg quality is hard coded to 75% at the moment.
+Currently mostly use it for resizing images for my web projects.
 Resizing is done in parallel so it is pretty fast to resize your entire folder for usage as thumbnails or something.
 
 # Usage
@@ -11,4 +11,6 @@ The default mode cover(Max) will preserve aspect ratio by changing one of the di
 # Image
 ![Main Window](resizer.JPG)
 
-
+# TODO
+Add option to add / edit presets
+Add option to set the output folder
